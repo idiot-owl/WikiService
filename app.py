@@ -38,7 +38,7 @@ def post():
     data = request.get_json()
     url_id = data['id']
     fields = data['fields']
-    
+
     url_obj = WikiService.query.filter_by(id=url_id).scalar()
     # Checking if the given id is present in the table
     if url_obj:
@@ -49,6 +49,37 @@ def post():
     else:
         # Return Failure
         return make_response(jsonify({"message": "No entry found for given ID"}), 400)
+
+
+@app.route("/", methods=['PUT'])
+def update():
+    data = request.get_json()
+    url_id = data['id']
+    add_fields = data['addFields']
+    remove_fields = data['removeFields']
+    
+    url_obj = WikiService.query.filter_by(id=url_id).scalar()
+    url_fields = json.loads(url_obj.fields)
+
+    url_fields += add_fields
+    
+    invalid_remove_fields = []
+    for field in remove_fields:
+        try:
+            url_fields.remove(field)
+        except:
+            invalid_remove_fields.append(field)
+
+    url_obj.fields = json.dumps(url_fields)
+    db.session.commit()
+
+    invalid_remove_fields = ', '.join(invalid_remove_fields)
+
+    if invalid_remove_fields:
+        return make_response(jsonify({"message": invalid_remove_fields + " field(s) were not found and thus weren't removed. Successfully Updated."}), 200)
+    else:
+        return make_response(jsonify({"message": "Successfully Updated"}), 200)
+
 
 
 if __name__ == '__main__':
