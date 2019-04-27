@@ -2,6 +2,7 @@ import requests
 import json
 from flask import Flask, request, make_response, jsonify
 from flask_sqlalchemy import SQLAlchemy
+from utils import *
 
 # Creating instances of the web application and setting path of SQLite uri
 app = Flask(__name__)
@@ -9,14 +10,7 @@ app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///test.db'
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 db = SQLAlchemy(app)
 
-
-# A class representing the row of the table in our database
-class WikiService(db.Model):
-    # Three columns: ID, URL and Fields
-    id = db.Column(db.Integer, primary_key=True)
-    url = db.Column(db.String(255), unique=True)
-    fields = db.Column(db.Text)
-
+from models import *
 
 # Endpoint for deleting the 'fields' column from the table
 @app.route('/', methods=['DELETE'])
@@ -98,26 +92,6 @@ def update():
         # Return Failure
         return make_response(jsonify({"message": "No entry found for given ID"}), 400)
 
-# Checking if the current data is a uel containing json
-def check_if_json(curr_data, curr_field):
-    try:
-        temp_data = curr_data[curr_field]
-        temp_data = json.loads((requests.get(temp_data)).content)
-    except:
-        return False
-    return temp_data
-    
-# Checking if the current data is in a list format  
-def check_if_list(curr_data, curr_field):
-    try:
-        temp_field_index = curr_field.find('[')
-        temp_field = curr_field[:temp_field_index]
-        temp_data = curr_data[temp_field]
-        temp_field = 'temp_data' + curr_field[temp_field_index:]
-        temp_data = eval(temp_field)
-    except:
-        return False
-    return temp_data
 
 # Endpoint for getting the result of the query
 @app.route("/", methods=['GET'])
